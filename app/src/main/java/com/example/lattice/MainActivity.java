@@ -1,6 +1,6 @@
 package com.example.lattice;
 
-import androidx.annotation.Nullable;
+
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
@@ -13,8 +13,9 @@ import android.content.Intent;
 import android.content.IntentFilter;
 import android.os.Bundle;
 import android.view.View;
-import android.widget.ArrayAdapter;
+
 import android.widget.ImageView;
+import android.widget.ListView;
 import android.widget.Toast;
 
 import java.util.ArrayList;
@@ -25,11 +26,12 @@ public class MainActivity extends AppCompatActivity {
 
     int ACTION_REQUEST_ENABLE = 2;
     int REQUEST_ENABLE_BT = 1;
-    private BluetoothAdapter myBluetoothAdapter;
+    private BluetoothAdapter myBluetoothAdapter = BluetoothAdapter.getDefaultAdapter();
     private ImageView bluetoothOnOffBtn, refreshDevice;
     private List<DeviceModel> deviceModelList;
     private RecyclerView recyclerView;
     private DeviceAdapter adapter;
+    private ListView listView;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -40,7 +42,8 @@ public class MainActivity extends AppCompatActivity {
         bluetoothOnOffBtn = findViewById(R.id.bluetooth_on_off_btn);
         refreshDevice = findViewById(R.id.refresh_device);
         recyclerView = findViewById(R.id.device_recycle_view);
-        myBluetoothAdapter = BluetoothAdapter.getDefaultAdapter();
+
+        listView = findViewById(R.id.listView);
         deviceModelList = new ArrayList<>();
 
         LinearLayoutManager manager = new LinearLayoutManager(this);
@@ -50,26 +53,34 @@ public class MainActivity extends AppCompatActivity {
         adapter = new DeviceAdapter(deviceModelList);
         recyclerView.setAdapter(adapter);
 
-        bluetoothOnOffBtn.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                if (myBluetoothAdapter.isEnabled()) {
-                    bluetoothOffMethod();
-                } else {
-                    bluetoothOnMethod();
-                }
+        bluetoothOnOffBtn.setOnClickListener(v -> {
+            if (myBluetoothAdapter.isEnabled()) {
+                bluetoothOffMethod();
+            } else {
+                bluetoothOnMethod();
+                bondedDevice();
             }
         });
 
-        refreshDevice.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
+        bondedDevice();
+
+        refreshDevice.setOnClickListener(v -> {
+
+            if (myBluetoothAdapter.isDiscovering()) {
+                Toast.makeText(MainActivity.this, "starting", Toast.LENGTH_SHORT).show();
                 myBluetoothAdapter.startDiscovery();
+                IntentFilter discoverDevicesIntent = new IntentFilter(BluetoothDevice.ACTION_FOUND);
+                registerReceiver(mBroadcastReceiver3, discoverDevicesIntent);
+                registerReceiver(broadcastReceiver, discoverDevicesIntent);
+            } else {
+                myBluetoothAdapter.startDiscovery();
+                Toast.makeText(MainActivity.this, "starting3333", Toast.LENGTH_SHORT).show();
+                IntentFilter discoverDevicesIntent = new IntentFilter(BluetoothDevice.ACTION_FOUND);
+                registerReceiver(mBroadcastReceiver3, discoverDevicesIntent);
+                registerReceiver(broadcastReceiver, discoverDevicesIntent);
             }
         });
 
-        IntentFilter intentFilter = new IntentFilter(BluetoothDevice.ACTION_FOUND);
-        registerReceiver(broadcastReceiver, intentFilter);
 
     }
 
@@ -111,6 +122,7 @@ public class MainActivity extends AppCompatActivity {
             }
         }
 
+        adapter.notifyDataSetChanged();
 
     }
 
@@ -120,12 +132,37 @@ public class MainActivity extends AppCompatActivity {
             String action = intent.getAction();
             if (BluetoothDevice.ACTION_FOUND.equals(action)) {
                 BluetoothDevice discoverDevice = intent.getParcelableExtra(BluetoothDevice.EXTRA_DEVICE);
-                Toast.makeText(context, discoverDevice.getName(), Toast.LENGTH_SHORT).show();
-                deviceModelList.add(new DeviceModel(discoverDevice.getName(), "recent"));
-                //adapter.notifyDataSetChanged();
+                Toast.makeText(context, discoverDevice.getAddress(), Toast.LENGTH_SHORT).show();
+                deviceModelList.add(new DeviceModel(discoverDevice.getAddress(), "recent"));
+                adapter = new DeviceAdapter(deviceModelList);
+                recyclerView.setAdapter(adapter);
+                adapter.notifyDataSetChanged();
             }
         }
     };
+
+    private BroadcastReceiver mBroadcastReceiver3 = new BroadcastReceiver() {
+        @Override
+        public void onReceive(Context context, Intent intent) {
+            final String action = intent.getAction();
+
+            Toast.makeText(context, "start", Toast.LENGTH_SHORT).show();
+
+            if (action.equals(BluetoothDevice.ACTION_FOUND)) {
+                BluetoothDevice device = intent.getParcelableExtra(BluetoothDevice.EXTRA_DEVICE);
+                //mBTDevices.add(device);
+                // Log.d(TAG, "onReceive: " + device.getName() + ": " + device.getAddress());
+                //mDeviceListAdapter = new DeviceListAdapter(context, R.layout.device_adapter_view, mBTDevices);
+                //lvNewDevices.setAdapter(mDeviceListAdapter);
+                Toast.makeText(context, device.getName(), Toast.LENGTH_SHORT).show();
+                deviceModelList.add(new DeviceModel(device.getName(), device.getAddress()));
+
+                adapter.notifyDataSetChanged();
+
+            }
+        }
+    };
+
 
     @Override
     protected void onActivityResult(int requestCode, int resultCode, Intent data) {
@@ -141,4 +178,6 @@ public class MainActivity extends AppCompatActivity {
             }
         }
     }
+
+
 }

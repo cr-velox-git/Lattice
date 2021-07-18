@@ -84,7 +84,7 @@
                         android:layout_weight="1"
                         android:text="mistake"
                         android:textColor="@android:color/holo_red_light"
-                        android:visibility="visible" />
+                        android:visibility="gone" />
                 </LinearLayout>
 
             </LinearLayout>
@@ -152,7 +152,7 @@
                         android:layout_weight="1"
                         android:text="mistake"
                         android:textColor="@android:color/holo_red_light"
-                        android:visibility="visible" />
+                        android:visibility="gone" />
                 </LinearLayout>
 
             </LinearLayout>
@@ -206,7 +206,7 @@
                         android:layout_weight="1"
                         android:text="mistake"
                         android:textColor="@android:color/holo_red_light"
-                        android:visibility="visible" />
+                        android:visibility="gone" />
                 </LinearLayout>
 
             </LinearLayout>
@@ -260,7 +260,7 @@
                         android:layout_weight="1"
                         android:text="mistake"
                         android:textColor="@android:color/holo_red_light"
-                        android:visibility="visible" />
+                        android:visibility="gone" />
                 </LinearLayout>
 
             </LinearLayout>
@@ -305,7 +305,7 @@
                         android:layout_weight="1"
                         android:ems="10"
                         android:hint="password"
-                        android:inputType="textPassword" />
+                        android:inputType="text" />
 
                     <EditText
                         android:id="@+id/ed_confirm_password"
@@ -314,7 +314,7 @@
                         android:layout_weight="1"
                         android:ems="10"
                         android:hint="confirm password"
-                        android:inputType="textPassword" />
+                        android:inputType="text" />
 
                     <TextView
                         android:id="@+id/er_password"
@@ -323,7 +323,7 @@
                         android:layout_weight="1"
                         android:text="mistake"
                         android:textColor="@android:color/holo_red_light"
-                        android:visibility="visible" />
+                        android:visibility="gone"/>
                 </LinearLayout>
 
             </LinearLayout>
@@ -355,7 +355,7 @@
                   />
 
                 <TextView
-                    android:id="@+id/textView6"
+                    android:id="@+id/login"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
 

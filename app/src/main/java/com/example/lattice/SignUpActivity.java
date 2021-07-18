@@ -11,6 +11,7 @@ import android.os.Bundle;
 import android.text.Editable;
 import android.text.TextWatcher;
 import android.view.View;
+import android.view.ViewGroup;
 import android.widget.Button;
 import android.widget.EditText;
 import android.widget.ImageView;
@@ -21,6 +22,7 @@ import com.android.volley.Request;
 import com.android.volley.Response;
 import com.android.volley.VolleyError;
 import com.android.volley.toolbox.JsonArrayRequest;
+import com.bumptech.glide.Glide;
 
 import org.intellij.lang.annotations.RegExp;
 import org.json.JSONArray;
@@ -30,16 +32,16 @@ import org.json.JSONObject;
 import java.io.StringWriter;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Objects;
 import java.util.regex.Pattern;
 
 public class SignUpActivity extends AppCompatActivity {
 
     private EditText ed_name, ed_phone, ed_email, ed_address, ed_password, ed_confirm_password;
-    private TextView er_name, er_phone, er_email, er_address, er_password;
+    private TextView er_name, er_phone, er_email, er_address, er_password,login;
     private ImageView im_name, im_phone, im_email, im_address, im_password;
     private Button signupBtn;
 
-    private String name, phone, email, password, address;
 
     private Dialog loadingDialog;
     List<UserData> userDataList = new ArrayList<>();
@@ -50,6 +52,23 @@ public class SignUpActivity extends AppCompatActivity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_sign_up);
 
+        //Initialize database
+        database = RoomDB.getInstance(this);
+
+        //........................ loading dialog start ......................//
+        loadingDialog = new Dialog(this);
+        loadingDialog.setContentView(R.layout.dialog_loading);
+        loadingDialog.setCancelable(false);
+        Objects.requireNonNull(loadingDialog.getWindow()).setBackgroundDrawableResource(R.drawable.round_corner);
+        Objects.requireNonNull(loadingDialog.getWindow()).setLayout(ViewGroup.LayoutParams.WRAP_CONTENT, ViewGroup.LayoutParams.WRAP_CONTENT);
+        //........................ loading dialog start ......................//
+
+        login = findViewById(R.id.login);
+
+        login.setOnClickListener(v->{
+            Intent intent = new Intent(this,MainActivity.class);
+            startActivity(intent);
+        });
 
         ed_name = findViewById(R.id.ed_name);
         ed_phone = findViewById(R.id.ed_phone);
@@ -80,17 +99,23 @@ public class SignUpActivity extends AppCompatActivity {
 
             }
 
+            @SuppressLint("SetTextI18n")
             @Override
             public void onTextChanged(CharSequence s, int start, int before, int count) {
                 if (s.length() < 4) {
+                    er_name.setVisibility(View.VISIBLE);
                     er_name.setText("Name should contain at-least 4 word");
+                } else if (s.length() > 4) {
+                    er_name.setVisibility(View.GONE);
+                    im_name.setImageResource(R.drawable.id_1);
                 }
             }
 
             @Override
             public void afterTextChanged(Editable s) {
-                if (s.length() < 4) {
-
+                if (s.length() > 4) {
+                    er_name.setVisibility(View.GONE);
+                    im_name.setImageResource(R.drawable.id_1);
                 }
             }
         });
@@ -103,8 +128,12 @@ public class SignUpActivity extends AppCompatActivity {
 
             @Override
             public void onTextChanged(CharSequence s, int start, int before, int count) {
-                if (s.length() < 11) {
+                if (s.length() < 9) {
+                    er_phone.setVisibility(View.VISIBLE);
                     er_phone.setText("Please enter correct Phone number");
+                } else if (s.length() == 10) {
+                    er_phone.setVisibility(View.GONE);
+                    im_phone.setImageResource(R.drawable.phone_1);
                 }
             }
 
@@ -123,9 +152,14 @@ public class SignUpActivity extends AppCompatActivity {
             @Override
             public void onTextChanged(CharSequence s, int start, int before, int count) {
                 if (s == "") {
+                    er_email.setVisibility(View.VISIBLE);
                     er_email.setText("enter Email");
                 } else if (!s.toString().contains("@")) {
+                    er_email.setVisibility(View.VISIBLE);
                     er_email.setText("Please input Proper EMail");
+                } else {
+                    er_email.setVisibility(View.GONE);
+                    im_email.setImageResource(R.drawable.email_1);
                 }
             }
 
@@ -141,9 +175,16 @@ public class SignUpActivity extends AppCompatActivity {
 
             }
 
+            @SuppressLint("SetTextI18n")
             @Override
             public void onTextChanged(CharSequence s, int start, int before, int count) {
-
+                if (s.length() < 9) {
+                    er_address.setVisibility(View.VISIBLE);
+                    er_address.setText("Please enter appropriate address");
+                } else if (s.length() == 10) {
+                    er_address.setVisibility(View.GONE);
+                    im_address.setImageResource(R.drawable.address_1);
+                }
             }
 
             @Override
@@ -164,8 +205,11 @@ public class SignUpActivity extends AppCompatActivity {
             @Override
             public void onTextChanged(CharSequence s, int start, int before, int count) {
 
-                if (!PATTERN.matcher(s).matches()) {
+                if (!PATTERN.matcher(s.toString()).matches()) {
+                    er_password.setVisibility(View.VISIBLE);
                     er_password.setText("Password (must contain one upper character, one lower character and a number. Max length 15 and min length 8)\n");
+                } else {
+                    er_password.setVisibility(View.GONE);
                 }
 
             }
@@ -183,9 +227,19 @@ public class SignUpActivity extends AppCompatActivity {
 
             }
 
+            @SuppressLint("SetTextI18n")
             @Override
             public void onTextChanged(CharSequence s, int start, int before, int count) {
 
+                if (ed_password.getText().toString().equals(s.toString())) {
+                    er_password.setVisibility(View.GONE);
+                    im_password.setImageResource(R.drawable.key_1);
+
+                } else {
+
+                    er_password.setVisibility(View.VISIBLE);
+                    er_password.setText("Password does not match");
+                }
             }
 
             @Override
@@ -194,33 +248,61 @@ public class SignUpActivity extends AppCompatActivity {
             }
         });
 
-        signupBtn.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                Intent mainIntent = new Intent(SignUpActivity.this, MainActivity.class);
-                startActivity(mainIntent);
-                //saveData();
-            }
-        });
+        signupBtn.setOnClickListener(v -> saveData());
     }
 
     private void saveData() {
         //clearing all data before fetching new set of data
         loadingDialog.show();
-        database.userDao().reset(userDataList);
 
-        UserData data = new UserData();
-        //Set data to the data
-        data.setName(name);
-        data.setPhone_no(phone);
-        data.setEmail(email);
-        data.setAddress(address);
-        data.setPassword(password);
-        //Insert data in database
-        database.userDao().insert(data);
 
-        userDataList.addAll(database.userDao().getAll());
-        loadingDialog.dismiss();
+        if (!ed_name.getText().toString().equals("")) {
+            if (!ed_phone.getText().toString().equals("")) {
+                if (!ed_email.getText().toString().equals("")) {
+                    if (!ed_address.getText().toString().equals("")) {
+                        if (!ed_password.getText().toString().equals("")) {
+                            if (ed_confirm_password.getText().toString().equals(ed_password.getText().toString())) {
 
+                                database.userDao().reset(userDataList);
+
+                                UserData data = new UserData();
+                                //Set data to the data
+                                data.setName(ed_name.getText().toString());
+                                data.setPhone_no(ed_phone.getText().toString());
+                                data.setEmail(ed_email.getText().toString());
+                                data.setAddress(ed_address.getText().toString());
+                                data.setPassword(ed_password.getText().toString());
+                                //Insert data in database
+                                database.userDao().insert(data);
+
+                                userDataList.addAll(database.userDao().getAll());
+
+                                loadingDialog.dismiss();
+                                Intent mainIntent = new Intent(SignUpActivity.this, MainActivity.class);
+                                startActivity(mainIntent);
+                            } else {
+                                Toast.makeText(this, "password did not match", Toast.LENGTH_SHORT).show();
+                                loadingDialog.dismiss();
+                            }
+                        } else {
+                            Toast.makeText(this, "Enter Password", Toast.LENGTH_SHORT).show();
+                            loadingDialog.dismiss();
+                        }
+                    } else {
+                        Toast.makeText(this, "Enter Address", Toast.LENGTH_SHORT).show();
+                        loadingDialog.dismiss();
+                    }
+                } else {
+                    Toast.makeText(this, "Enter Email", Toast.LENGTH_SHORT).show();
+                    loadingDialog.dismiss();
+                }
+            } else {
+                Toast.makeText(this, "Enter PhoneNumber", Toast.LENGTH_SHORT).show();
+                loadingDialog.dismiss();
+            }
+        } else {
+            Toast.makeText(this, "Enter Your Name", Toast.LENGTH_SHORT).show();
+            loadingDialog.dismiss();
+        }
     }
 }

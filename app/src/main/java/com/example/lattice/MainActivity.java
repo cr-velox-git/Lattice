@@ -27,10 +27,10 @@ public class MainActivity extends AppCompatActivity {
     int ACTION_REQUEST_ENABLE = 2;
     int REQUEST_ENABLE_BT = 1;
     private BluetoothAdapter myBluetoothAdapter = BluetoothAdapter.getDefaultAdapter();
-    private ImageView bluetoothOnOffBtn, refreshDevice;
+    private ImageView bluetoothOnOffBtn, searchDeviceBtn;
     private List<DeviceModel> deviceModelList;
-    private RecyclerView recyclerView;
-    private DeviceAdapter adapter;
+    private RecyclerView recyclerViewBonded;
+    private DeviceAdapter bondedAdapter;
     private ListView listView;
 
     @Override
@@ -40,31 +40,38 @@ public class MainActivity extends AppCompatActivity {
         setContentView(R.layout.activity_main);
 
         bluetoothOnOffBtn = findViewById(R.id.bluetooth_on_off_btn);
-        refreshDevice = findViewById(R.id.refresh_device);
-        recyclerView = findViewById(R.id.device_recycle_view);
+        searchDeviceBtn = findViewById(R.id.search_device);
+        recyclerViewBonded = findViewById(R.id.device_recycle_view);
 
-        listView = findViewById(R.id.listView);
+
         deviceModelList = new ArrayList<>();
 
         LinearLayoutManager manager = new LinearLayoutManager(this);
         manager.setOrientation(RecyclerView.VERTICAL);
-        recyclerView.setLayoutManager(manager);
+        recyclerViewBonded.setLayoutManager(manager);
 
-        adapter = new DeviceAdapter(deviceModelList);
-        recyclerView.setAdapter(adapter);
+        bondedAdapter = new DeviceAdapter(deviceModelList);
+        recyclerViewBonded.setAdapter(bondedAdapter);
+
+        if (myBluetoothAdapter.isEnabled()){
+            bluetoothOnOffBtn.setImageResource(R.drawable.ic_baseline_bluetooth_24);
+        }else{
+            bluetoothOnOffBtn.setImageResource(R.drawable.ic_baseline_bluetooth_disabled_24);
+        }
+
 
         bluetoothOnOffBtn.setOnClickListener(v -> {
             if (myBluetoothAdapter.isEnabled()) {
                 bluetoothOffMethod();
             } else {
                 bluetoothOnMethod();
-                bondedDevice();
+
             }
         });
 
         bondedDevice();
 
-        refreshDevice.setOnClickListener(v -> {
+        searchDeviceBtn.setOnClickListener(v -> {
 
             if (myBluetoothAdapter.isDiscovering()) {
                 Toast.makeText(MainActivity.this, "starting", Toast.LENGTH_SHORT).show();
@@ -101,29 +108,21 @@ public class MainActivity extends AppCompatActivity {
     private void bluetoothOffMethod() {
         if (myBluetoothAdapter.isEnabled()) {
             myBluetoothAdapter.disable();
+            bluetoothOnOffBtn.setImageResource(R.drawable.ic_baseline_bluetooth_disabled_24);
         }
     }
 
     private void bondedDevice() {
         Set<BluetoothDevice> bondedDevices = myBluetoothAdapter.getBondedDevices();
+        deviceModelList.clear();
 
-        String[] strings = new String[bondedDevices.size()];
-        int index = 0;
         if (bondedDevices.size() > 0) {
             for (BluetoothDevice device : bondedDevices) {
-                strings[index] = device.getName();
-
-                //                device.getBondState();
-                //                device.getAddress();
-
-                index++;
                 deviceModelList.add(new DeviceModel(device.getName(), device.getAddress()));
-                Toast.makeText(this, strings[index - 1] + "...." + device.getBluetoothClass(), Toast.LENGTH_SHORT).show();
+                //Toast.makeText(this, strings[index - 1] + "...." + device.getBluetoothClass(), Toast.LENGTH_SHORT).show();
             }
         }
-
-        adapter.notifyDataSetChanged();
-
+        bondedAdapter.notifyDataSetChanged();
     }
 
     BroadcastReceiver broadcastReceiver = new BroadcastReceiver() {
@@ -131,12 +130,14 @@ public class MainActivity extends AppCompatActivity {
         public void onReceive(Context context, Intent intent) {
             String action = intent.getAction();
             if (BluetoothDevice.ACTION_FOUND.equals(action)) {
+
                 BluetoothDevice discoverDevice = intent.getParcelableExtra(BluetoothDevice.EXTRA_DEVICE);
                 Toast.makeText(context, discoverDevice.getAddress(), Toast.LENGTH_SHORT).show();
+
                 deviceModelList.add(new DeviceModel(discoverDevice.getAddress(), "recent"));
-                adapter = new DeviceAdapter(deviceModelList);
-                recyclerView.setAdapter(adapter);
-                adapter.notifyDataSetChanged();
+                bondedAdapter = new DeviceAdapter(deviceModelList);
+                recyclerViewBonded.setAdapter(bondedAdapter);
+                bondedAdapter.notifyDataSetChanged();
             }
         }
     };
@@ -157,7 +158,7 @@ public class MainActivity extends AppCompatActivity {
                 Toast.makeText(context, device.getName(), Toast.LENGTH_SHORT).show();
                 deviceModelList.add(new DeviceModel(device.getName(), device.getAddress()));
 
-                adapter.notifyDataSetChanged();
+                bondedAdapter.notifyDataSetChanged();
 
             }
         }
@@ -172,9 +173,12 @@ public class MainActivity extends AppCompatActivity {
             if (resultCode == RESULT_OK) {
                 //Bluetooth is Enabled
                 Toast.makeText(this, "Bluetooth is Enable", Toast.LENGTH_SHORT).show();
+                bondedDevice();
+                bluetoothOnOffBtn.setImageResource(R.drawable.ic_baseline_bluetooth_24);
             } else if (resultCode == RESULT_CANCELED) {
                 // bluetooth enable is cancelled
                 Toast.makeText(this, "Bluetooth Enable is Cancelled", Toast.LENGTH_LONG).show();
+                bluetoothOnOffBtn.setImageResource(R.drawable.ic_baseline_bluetooth_disabled_24);
             }
         }
     }

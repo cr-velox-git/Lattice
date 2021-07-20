@@ -118,7 +118,7 @@ public class MainActivity extends AppCompatActivity {
 
         if (bondedDevices.size() > 0) {
             for (BluetoothDevice device : bondedDevices) {
-                deviceModelList.add(new DeviceModel(device.getName(), device.getAddress()));
+                deviceModelList.add(new DeviceModel(device));
                 //Toast.makeText(this, strings[index - 1] + "...." + device.getBluetoothClass(), Toast.LENGTH_SHORT).show();
             }
         }
@@ -134,7 +134,7 @@ public class MainActivity extends AppCompatActivity {
                 BluetoothDevice discoverDevice = intent.getParcelableExtra(BluetoothDevice.EXTRA_DEVICE);
                 Toast.makeText(context, discoverDevice.getAddress(), Toast.LENGTH_SHORT).show();
 
-                deviceModelList.add(new DeviceModel(discoverDevice.getAddress(), "recent"));
+                deviceModelList.add(new DeviceModel(discoverDevice));
                 bondedAdapter = new DeviceAdapter(deviceModelList);
                 recyclerViewBonded.setAdapter(bondedAdapter);
                 bondedAdapter.notifyDataSetChanged();
@@ -156,7 +156,7 @@ public class MainActivity extends AppCompatActivity {
                 //mDeviceListAdapter = new DeviceListAdapter(context, R.layout.device_adapter_view, mBTDevices);
                 //lvNewDevices.setAdapter(mDeviceListAdapter);
                 Toast.makeText(context, device.getName(), Toast.LENGTH_SHORT).show();
-                deviceModelList.add(new DeviceModel(device.getName(), device.getAddress()));
+                deviceModelList.add(new DeviceModel(device));
 
                 bondedAdapter.notifyDataSetChanged();
 

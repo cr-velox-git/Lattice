@@ -1,5 +1,7 @@
 package com.example.lattice;
 
+import android.bluetooth.BluetoothDevice;
+import android.content.Intent;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -24,17 +26,16 @@ public class DeviceAdapter extends RecyclerView.Adapter<DeviceAdapter.Viewholder
     @NotNull
     @Override
     public Viewholder onCreateViewHolder(@NonNull @NotNull ViewGroup parent, int viewType) {
-        View view = LayoutInflater.from(parent.getContext()).inflate(R.layout.item_device_info,parent,false);
+        View view = LayoutInflater.from(parent.getContext()).inflate(R.layout.item_device_info, parent, false);
 
         return new Viewholder(view);
     }
 
     @Override
     public void onBindViewHolder(@NonNull @NotNull Viewholder holder, int position) {
-        String name = deviceModelList.get(position).getDeviceName();
-        String address = deviceModelList.get(position).getDeviceAddress();
+        BluetoothDevice bluetoothDevice = deviceModelList.get(position).getDevice();
 
-        holder.setData(name, address);
+        holder.setData( bluetoothDevice, position);
     }
 
     @Override
@@ -42,22 +43,32 @@ public class DeviceAdapter extends RecyclerView.Adapter<DeviceAdapter.Viewholder
         return deviceModelList.size();
     }
 
-    public class Viewholder extends RecyclerView.ViewHolder{
+    public class Viewholder extends RecyclerView.ViewHolder {
 
         private TextView deviceName, deviceAddress;
 
         public Viewholder(@NonNull @NotNull View itemView) {
             super(itemView);
 
-            deviceAddress= itemView.findViewById(R.id.device_address);
+            deviceAddress = itemView.findViewById(R.id.device_address);
             deviceName = itemView.findViewById(R.id.device_name);
         }
 
-        public void setData(String name, String address) {
+        public void setData( BluetoothDevice bluetoothDevice, int position) {
 
-            deviceName.setText(name);
-            deviceAddress.setText(address);
+            deviceName.setText(bluetoothDevice.getName());
+            deviceAddress.setText(bluetoothDevice.getAddress());
 
+            itemView.setOnClickListener(new View.OnClickListener() {
+                @Override
+                public void onClick(View v) {
+                    Intent messageIntent = new Intent(itemView.getContext(), DeviceChatActivity.class);
+                    messageIntent.putExtra("BLUETOOTH_DEVICE", bluetoothDevice);
+                    itemView.getContext().startActivity(messageIntent);
+                }
+            });
         }
     }
+
+
 }

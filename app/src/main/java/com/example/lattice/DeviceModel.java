@@ -1,28 +1,21 @@
 package com.example.lattice;
 
+import android.bluetooth.BluetoothDevice;
+
 public class DeviceModel {
 
-    private String DeviceName;
-    private String DeviceAddress;
+    private BluetoothDevice Device;
 
-    public DeviceModel(String deviceName, String deviceAddress) {
-        DeviceName = deviceName;
-        DeviceAddress = deviceAddress;
+    public DeviceModel(BluetoothDevice device) {
+        Device = device;
     }
 
-    public String getDeviceName() {
-        return DeviceName;
+
+    public BluetoothDevice getDevice() {
+        return Device;
     }
 
-    public void setDeviceName(String deviceName) {
-        DeviceName = deviceName;
-    }
-
-    public String getDeviceAddress() {
-        return DeviceAddress;
-    }
-
-    public void setDeviceAddress(String deviceAddress) {
-        DeviceAddress = deviceAddress;
+    public void setDevice(BluetoothDevice device) {
+        Device = device;
     }
 }

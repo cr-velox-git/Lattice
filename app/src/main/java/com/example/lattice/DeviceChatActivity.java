@@ -2,6 +2,8 @@ package com.example.lattice;
 
 import androidx.annotation.NonNull;
 import androidx.appcompat.app.AppCompatActivity;
+import androidx.recyclerview.widget.LinearLayoutManager;
+import androidx.recyclerview.widget.RecyclerView;
 
 import android.annotation.SuppressLint;
 import android.bluetooth.BluetoothAdapter;
@@ -24,17 +26,20 @@ import android.widget.Toast;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.UUID;
 
 public class DeviceChatActivity extends AppCompatActivity {
 
-    private TextView msg_box, status;
+    private TextView status;
     private EditText writeMsg;
     private Button send;
+    private RecyclerView recyclerView;
 
     SendReceive sendReceive;
 
-    BluetoothAdapter bluetoothAdapter  = BluetoothAdapter.getDefaultAdapter();
+    BluetoothAdapter bluetoothAdapter = BluetoothAdapter.getDefaultAdapter();
     BluetoothDevice bluetoothDevice;
 
     static final int STATE_LISTENING = 1;
@@ -44,10 +49,11 @@ public class DeviceChatActivity extends AppCompatActivity {
     static final int STATE_MESSAGE_RECEIVED = 5;
     int REQUEST_ENABLE_BLUETOOTH = 1;
 
-
+    private List<ChatModel> chatModelList = new ArrayList<>();
+    private ChatAdapter chatAdapter;
 
     private static final String APP_NAME = "BT_CHAT";
-    private UUID MY_UUID; //past own uuid
+    private final UUID MY_UUID = UUID.randomUUID(); //past own uuid
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -56,9 +62,18 @@ public class DeviceChatActivity extends AppCompatActivity {
         status = findViewById(R.id.status);
         send = findViewById(R.id.send);
         writeMsg = findViewById(R.id.writeMssg);
-        msg_box = findViewById(R.id.mmsg);
-        MY_UUID = deviceUDID(this);
+        recyclerView = findViewById(R.id.chat_recycleview);
         bluetoothDevice = (BluetoothDevice) getIntent().getExtras().get("BLUETOOTH_DEVICE");
+
+        //deviceUDID(this);
+
+        LinearLayoutManager manager = new LinearLayoutManager(this);
+        manager.setOrientation(RecyclerView.VERTICAL);
+        recyclerView.setLayoutManager(manager);
+
+        chatAdapter = new ChatAdapter(chatModelList);
+        recyclerView.setAdapter(chatAdapter);
+
 
         if (!bluetoothAdapter.isEnabled()) {
 
@@ -129,8 +144,11 @@ public class DeviceChatActivity extends AppCompatActivity {
                     break;
                 case STATE_MESSAGE_RECEIVED:
                     byte[] readBuff = (byte[]) msg.obj;
-                    String tempMsg= new String(readBuff,0,msg.arg1);
-                    msg_box.setText(tempMsg); //showing message
+                    String tempMsg = new String(readBuff, 0, msg.arg1);
+                    //on message receive
+                    chatModelList.add(new ChatModel(tempMsg, ChatModel.RECEIVE));
+                    chatAdapter.notifyDataSetChanged();
+
 
                     break;
             }
@@ -149,8 +167,10 @@ public class DeviceChatActivity extends AppCompatActivity {
             }
         }
 
+        BluetoothSocket socket = null;
+
         public void run() {
-            BluetoothSocket socket = null;
+
             while (socket == null) {
                 try {
                     Message message = Message.obtain();
@@ -179,22 +199,22 @@ public class DeviceChatActivity extends AppCompatActivity {
 
     }
 
-    private class ClientClass extends Thread{
+    private class ClientClass extends Thread {
 
         private BluetoothSocket socket1;
         private BluetoothDevice device;
 
-        public ClientClass(BluetoothDevice device1){
+        public ClientClass(BluetoothDevice device1) {
             device = device1;
 
             try {
                 socket1 = device.createRfcommSocketToServiceRecord(MY_UUID);
-            }catch (IOException ex){
+            } catch (IOException ex) {
                 ex.printStackTrace();
             }
         }
 
-        public void run(){
+        public void run() {
             bluetoothAdapter.cancelDiscovery();
             try {
                 socket1.connect();
@@ -203,8 +223,8 @@ public class DeviceChatActivity extends AppCompatActivity {
                 handler.sendMessage(message);
                 sendReceive = new SendReceive(socket1);
                 sendReceive.start();
-            //Something to send / receive message
-            }catch (IOException ex){
+                //Something to send / receive message
+            } catch (IOException ex) {
                 ex.printStackTrace();
                 Message message = Message.obtain();
                 message.what = STATE_CONNECTED;
@@ -214,12 +234,12 @@ public class DeviceChatActivity extends AppCompatActivity {
 
     }
 
-    private class SendReceive extends  Thread{
+    private class SendReceive extends Thread {
         private final BluetoothSocket bluetoothSocket;
         private final InputStream inputStream;
         private final OutputStream outputStream;
 
-        public SendReceive(BluetoothSocket socket){ //constructor
+        public SendReceive(BluetoothSocket socket) { //constructor
             bluetoothSocket = socket;
             InputStream tempIn = null;
             OutputStream tempOut = null;
@@ -227,6 +247,7 @@ public class DeviceChatActivity extends AppCompatActivity {
             try {
                 tempIn = bluetoothSocket.getInputStream();
                 tempOut = bluetoothSocket.getOutputStream();
+
             } catch (IOException e) {
                 e.printStackTrace();
             }
@@ -236,24 +257,26 @@ public class DeviceChatActivity extends AppCompatActivity {
             outputStream = tempOut;
         }
 
-        public void run(){
+        public void run() {
             byte[] buffer = new byte[1024];
             int bytes;
 
-            while (true){
+            while (true) {
                 try {
                     bytes = inputStream.read(buffer); //buffer contain the message
 
-                    handler.obtainMessage(STATE_MESSAGE_RECEIVED,bytes,-1,buffer).sendToTarget();
+                    handler.obtainMessage(STATE_MESSAGE_RECEIVED, bytes, -1, buffer).sendToTarget();
                 } catch (IOException e) {
                     e.printStackTrace();
                 }
             }
         }
 
-        public void write(byte[] bytes){
+        public void write(byte[] bytes) {
             try {
                 outputStream.write(bytes);
+                chatModelList.add(new ChatModel(outputStream.toString(), ChatModel.SEND));
+                chatAdapter.notifyDataSetChanged();
             } catch (IOException e) {
                 e.printStackTrace();
             }
@@ -262,7 +285,7 @@ public class DeviceChatActivity extends AppCompatActivity {
     }
 
     @SuppressLint("HardwareIds")
-    public UUID deviceUDID(Context ctx) {
+    public void deviceUDID(Context ctx) {
         final TelephonyManager tm = (TelephonyManager) ctx.getSystemService(Context.TELEPHONY_SERVICE);
 
         final String tmDevice, tmSerial, androidId;
@@ -273,6 +296,6 @@ public class DeviceChatActivity extends AppCompatActivity {
         UUID deviceUuid = new UUID(androidId.hashCode(), ((long) tmDevice.hashCode() << 32) | tmSerial.hashCode());
         String deviceId = deviceUuid.toString();
         Toast.makeText(ctx, deviceId, Toast.LENGTH_SHORT).show();
-        return deviceUuid;
+//        MY_UUID =  deviceUuid;
     }
 }

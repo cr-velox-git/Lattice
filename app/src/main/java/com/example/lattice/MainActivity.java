@@ -243,7 +243,7 @@ public class MainActivity extends AppCompatActivity {
                         break;
                     //device is not in discoverable mode
                     case BluetoothAdapter.SCAN_MODE_CONNECTABLE:
-                        Log.d(TAG, "discoverbility disable, able to receive connection");
+                        Log.d(TAG, "discoverability disable, able to receive connection");
                         Toast.makeText(context, "discoverability disable, able to receive connection", Toast.LENGTH_SHORT).show();
                         break;
                     case BluetoothAdapter.SCAN_MODE_NONE:

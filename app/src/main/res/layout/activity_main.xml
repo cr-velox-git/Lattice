@@ -48,6 +48,7 @@
         app:layout_constraintTop_toBottomOf="@+id/device_recycle_view" />
 
     <androidx.recyclerview.widget.RecyclerView
+        android:id="@+id/search_recycle"
         android:layout_width="0dp"
         android:layout_height="wrap_content"
         android:layout_marginStart="8dp"
@@ -65,5 +66,15 @@
         app:layout_constraintBottom_toBottomOf="@+id/textView7"
         app:layout_constraintEnd_toEndOf="parent"
         app:srcCompat="@drawable/ic_baseline_autorenew_24" />
+
+    <ImageView
+        android:id="@+id/discoverDevice"
+        android:layout_width="30dp"
+        android:layout_height="30dp"
+        android:layout_marginEnd="32dp"
+        app:layout_constraintBottom_toBottomOf="@+id/search_device"
+        app:layout_constraintEnd_toStartOf="@+id/search_device"
+        app:layout_constraintTop_toTopOf="@+id/search_device"
+        app:srcCompat="@drawable/ic_baseline_visibility_24" />
 
 </androidx.constraintlayout.widget.ConstraintLayout>

@@ -52,8 +52,9 @@ public class DeviceChatActivity extends AppCompatActivity {
     private List<ChatModel> chatModelList = new ArrayList<>();
     private ChatAdapter chatAdapter;
 
-    private static final String APP_NAME = "BT_CHAT";
-    private final UUID MY_UUID = UUID.randomUUID(); //past own uuid
+    private static final String APP_NAME = String.valueOf(R.string.app_name);
+    private static final UUID MY_UUID = UUID.fromString("8ce255c0-223a-11e0-ac64-0803450c9a66");
+
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -89,7 +90,7 @@ public class DeviceChatActivity extends AppCompatActivity {
         }
 
         //start the server
-        BluetoothServerClass serverClass = new BluetoothServerClass();
+        ServerClass serverClass = new ServerClass();
         serverClass.start();
 
         //
@@ -99,12 +100,9 @@ public class DeviceChatActivity extends AppCompatActivity {
         //we will set the
         status.setText("Connecting");
 
-        send.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                String string = String.valueOf(writeMsg.getText());
-                sendReceive.write(string.getBytes());
-            }
+        send.setOnClickListener(v -> {
+            String string = String.valueOf(writeMsg.getText());
+            sendReceive.write(string.getBytes());
         });
     }
 
@@ -126,29 +124,33 @@ public class DeviceChatActivity extends AppCompatActivity {
 
 
     Handler handler = new Handler(new Handler.Callback() {
-        @SuppressLint("SetTextI18n")
         @Override
-        public boolean handleMessage(@NonNull Message msg) {
+        public boolean handleMessage(Message msg) {
+
             switch (msg.what) {
                 case STATE_LISTENING:
+                    send.setVisibility(View.GONE);
                     status.setText("Listening");
                     break;
                 case STATE_CONNECTING:
-                    status.setText("connecting");
+                    send.setVisibility(View.GONE);
+                    status.setText("Connecting");
                     break;
                 case STATE_CONNECTED:
                     status.setText("Connected");
+                    send.setVisibility(View.VISIBLE);
                     break;
                 case STATE_CONNECTION_FAILED:
-                    status.setText("Connection failed");
+                    send.setVisibility(View.GONE);
+                    status.setText("Connection Failed");
                     break;
                 case STATE_MESSAGE_RECEIVED:
+                    send.setVisibility(View.GONE);
                     byte[] readBuff = (byte[]) msg.obj;
                     String tempMsg = new String(readBuff, 0, msg.arg1);
                     //on message receive
                     chatModelList.add(new ChatModel(tempMsg, ChatModel.RECEIVE));
                     chatAdapter.notifyDataSetChanged();
-
 
                     break;
             }
@@ -156,10 +158,11 @@ public class DeviceChatActivity extends AppCompatActivity {
         }
     });
 
-    public class BluetoothServerClass extends Thread {
+
+    private class ServerClass extends Thread {
         private BluetoothServerSocket serverSocket;
 
-        public void BluetoothServerClass() {
+        public ServerClass() {
             try {
                 serverSocket = bluetoothAdapter.listenUsingRfcommWithServiceRecord(APP_NAME, MY_UUID);
             } catch (IOException e) {
@@ -167,71 +170,67 @@ public class DeviceChatActivity extends AppCompatActivity {
             }
         }
 
-        BluetoothSocket socket = null;
-
         public void run() {
+            BluetoothSocket socket = null;
 
             while (socket == null) {
                 try {
                     Message message = Message.obtain();
                     message.what = STATE_CONNECTING;
                     handler.sendMessage(message);
+
                     socket = serverSocket.accept();
                 } catch (IOException e) {
-                    //Toast.makeText(DeviceChatActivity.this, e, Toast.LENGTH_LONG).show();
+                    e.printStackTrace();
                     Message message = Message.obtain();
                     message.what = STATE_CONNECTION_FAILED;
                     handler.sendMessage(message);
-
                 }
 
                 if (socket != null) {
                     Message message = Message.obtain();
                     message.what = STATE_CONNECTED;
                     handler.sendMessage(message);
-                    //do something to send or receive
+
                     sendReceive = new SendReceive(socket);
                     sendReceive.start();
                     break;
                 }
             }
         }
-
     }
 
     private class ClientClass extends Thread {
-
-        private BluetoothSocket socket1;
         private BluetoothDevice device;
+        private BluetoothSocket socket;
 
         public ClientClass(BluetoothDevice device1) {
             device = device1;
 
             try {
-                socket1 = device.createRfcommSocketToServiceRecord(MY_UUID);
-            } catch (IOException ex) {
-                ex.printStackTrace();
+                socket = device.createRfcommSocketToServiceRecord(MY_UUID);
+            } catch (IOException e) {
+                e.printStackTrace();
             }
         }
 
         public void run() {
-            bluetoothAdapter.cancelDiscovery();
             try {
-                socket1.connect();
+                socket.connect();
                 Message message = Message.obtain();
                 message.what = STATE_CONNECTED;
                 handler.sendMessage(message);
-                sendReceive = new SendReceive(socket1);
+
+                sendReceive = new SendReceive(socket);
                 sendReceive.start();
-                //Something to send / receive message
-            } catch (IOException ex) {
-                ex.printStackTrace();
+
+            } catch (IOException e) {
+                e.printStackTrace();
                 Message message = Message.obtain();
-                message.what = STATE_CONNECTED;
+                message.what = STATE_CONNECTION_FAILED;
                 handler.sendMessage(message);
             }
         }
-
     }
 
     private class SendReceive extends Thread {
@@ -239,7 +238,7 @@ public class DeviceChatActivity extends AppCompatActivity {
         private final InputStream inputStream;
         private final OutputStream outputStream;
 
-        public SendReceive(BluetoothSocket socket) { //constructor
+        public SendReceive(BluetoothSocket socket) {
             bluetoothSocket = socket;
             InputStream tempIn = null;
             OutputStream tempOut = null;
@@ -247,11 +246,9 @@ public class DeviceChatActivity extends AppCompatActivity {
             try {
                 tempIn = bluetoothSocket.getInputStream();
                 tempOut = bluetoothSocket.getOutputStream();
-
             } catch (IOException e) {
                 e.printStackTrace();
             }
-
 
             inputStream = tempIn;
             outputStream = tempOut;
@@ -263,8 +260,7 @@ public class DeviceChatActivity extends AppCompatActivity {
 
             while (true) {
                 try {
-                    bytes = inputStream.read(buffer); //buffer contain the message
-
+                    bytes = inputStream.read(buffer);
                     handler.obtainMessage(STATE_MESSAGE_RECEIVED, bytes, -1, buffer).sendToTarget();
                 } catch (IOException e) {
                     e.printStackTrace();
@@ -275,13 +271,10 @@ public class DeviceChatActivity extends AppCompatActivity {
         public void write(byte[] bytes) {
             try {
                 outputStream.write(bytes);
-                chatModelList.add(new ChatModel(outputStream.toString(), ChatModel.SEND));
-                chatAdapter.notifyDataSetChanged();
             } catch (IOException e) {
                 e.printStackTrace();
             }
         }
-
     }
 
     @SuppressLint("HardwareIds")

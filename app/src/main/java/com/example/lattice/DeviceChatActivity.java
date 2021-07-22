@@ -32,7 +32,7 @@ import java.util.UUID;
 
 public class DeviceChatActivity extends AppCompatActivity {
 
-    private TextView status;
+    private TextView status, chatDevice;
     private EditText writeMsg;
     private Button send;
     private RecyclerView recyclerView;
@@ -52,7 +52,7 @@ public class DeviceChatActivity extends AppCompatActivity {
     private List<ChatModel> chatModelList = new ArrayList<>();
     private ChatAdapter chatAdapter;
 
-    private static final String APP_NAME = String.valueOf(R.string.app_name);
+    private static final String APP_NAME = "LACTTICE";
     private static final UUID MY_UUID = UUID.fromString("8ce255c0-223a-11e0-ac64-0803450c9a66");
 
 
@@ -64,9 +64,12 @@ public class DeviceChatActivity extends AppCompatActivity {
         send = findViewById(R.id.send);
         writeMsg = findViewById(R.id.writeMssg);
         recyclerView = findViewById(R.id.chat_recycleview);
+        chatDevice = findViewById(R.id.chat_device_name);
         bluetoothDevice = (BluetoothDevice) getIntent().getExtras().get("BLUETOOTH_DEVICE");
 
+        chatDevice.setText(bluetoothDevice.getName());
         //deviceUDID(this);
+        bluetoothAdapter.cancelDiscovery();
 
         LinearLayoutManager manager = new LinearLayoutManager(this);
         manager.setOrientation(RecyclerView.VERTICAL);
@@ -103,6 +106,8 @@ public class DeviceChatActivity extends AppCompatActivity {
         send.setOnClickListener(v -> {
             String string = String.valueOf(writeMsg.getText());
             sendReceive.write(string.getBytes());
+            chatModelList.add(new ChatModel(string, ChatModel.SEND));
+
         });
     }
 
@@ -129,26 +134,26 @@ public class DeviceChatActivity extends AppCompatActivity {
 
             switch (msg.what) {
                 case STATE_LISTENING:
-                    send.setVisibility(View.GONE);
                     status.setText("Listening");
+                    send.setEnabled(true);
                     break;
                 case STATE_CONNECTING:
-                    send.setVisibility(View.GONE);
                     status.setText("Connecting");
                     break;
                 case STATE_CONNECTED:
                     status.setText("Connected");
-                    send.setVisibility(View.VISIBLE);
+                    send.setEnabled(true);
                     break;
                 case STATE_CONNECTION_FAILED:
-                    send.setVisibility(View.GONE);
                     status.setText("Connection Failed");
+                    send.setEnabled(false);
                     break;
                 case STATE_MESSAGE_RECEIVED:
-                    send.setVisibility(View.GONE);
+                    send.setEnabled(true);
                     byte[] readBuff = (byte[]) msg.obj;
                     String tempMsg = new String(readBuff, 0, msg.arg1);
                     //on message receive
+
                     chatModelList.add(new ChatModel(tempMsg, ChatModel.RECEIVE));
                     chatAdapter.notifyDataSetChanged();
 
@@ -271,24 +276,11 @@ public class DeviceChatActivity extends AppCompatActivity {
         public void write(byte[] bytes) {
             try {
                 outputStream.write(bytes);
+                writeMsg.setText("");
+                chatAdapter.notifyDataSetChanged();
             } catch (IOException e) {
                 e.printStackTrace();
             }
         }
-    }
-
-    @SuppressLint("HardwareIds")
-    public void deviceUDID(Context ctx) {
-        final TelephonyManager tm = (TelephonyManager) ctx.getSystemService(Context.TELEPHONY_SERVICE);
-
-        final String tmDevice, tmSerial, androidId;
-        tmDevice = "" + tm.getDeviceId(); //line 82
-        tmSerial = "" + tm.getSimSerialNumber();
-        androidId = "" + android.provider.Settings.Secure.getString(ctx.getContentResolver(), android.provider.Settings.Secure.ANDROID_ID);
-
-        UUID deviceUuid = new UUID(androidId.hashCode(), ((long) tmDevice.hashCode() << 32) | tmSerial.hashCode());
-        String deviceId = deviceUuid.toString();
-        Toast.makeText(ctx, deviceId, Toast.LENGTH_SHORT).show();
-//        MY_UUID =  deviceUuid;
     }
 }

@@ -88,14 +88,7 @@ public class MainActivity extends AppCompatActivity {
         enableDiscoverable.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                Toast.makeText(MainActivity.this, "making device discoverable for 300 sec", Toast.LENGTH_SHORT).show();
-                Log.d(TAG, "making device discoverable for 300 sec");
-                Intent discoverableIntent = new Intent(BluetoothAdapter.ACTION_REQUEST_DISCOVERABLE);
-                discoverableIntent.putExtra(BluetoothAdapter.EXTRA_DISCOVERABLE_DURATION, 300);
-                startActivity(discoverableIntent);
-
-                IntentFilter discoverIntentFilter = new IntentFilter(myBluetoothAdapter.ACTION_SCAN_MODE_CHANGED);
-                registerReceiver(discoverOnOffBroadcastReceiver, discoverIntentFilter);
+                enableDis();
             }
         });
 
@@ -106,6 +99,7 @@ public class MainActivity extends AppCompatActivity {
                 myBluetoothAdapter.cancelDiscovery();
 
                 checkBTPermission();
+                //enableDis();
                 Toast.makeText(this, "Starting to discover device", Toast.LENGTH_SHORT).show();
                 Log.d(TAG, "Starting to discover device");
                 myBluetoothAdapter.startDiscovery();
@@ -115,6 +109,7 @@ public class MainActivity extends AppCompatActivity {
             }
             if (!myBluetoothAdapter.isDiscovering()) {
                 checkBTPermission();
+                //enableDis();
                 Toast.makeText(this, "Starting to discover device", Toast.LENGTH_SHORT).show();
                 Log.d(TAG, "Starting to discover device");
                 myBluetoothAdapter.startDiscovery();
@@ -122,8 +117,19 @@ public class MainActivity extends AppCompatActivity {
                 registerReceiver(searchDeviceBroadcastReceiver, searchDeviceIntent);
 
             }
-            searchDevice();
+
         });
+    }
+
+    private void enableDis() {
+        Toast.makeText(MainActivity.this, "making device discoverable for 300 sec", Toast.LENGTH_SHORT).show();
+        Log.d(TAG, "making device discoverable for 300 sec");
+        Intent discoverableIntent = new Intent(BluetoothAdapter.ACTION_REQUEST_DISCOVERABLE);
+        discoverableIntent.putExtra(BluetoothAdapter.EXTRA_DISCOVERABLE_DURATION, 300);
+        startActivity(discoverableIntent);
+
+        IntentFilter discoverIntentFilter = new IntentFilter(BluetoothAdapter.ACTION_SCAN_MODE_CHANGED);
+        registerReceiver(discoverOnOffBroadcastReceiver, discoverIntentFilter);
     }
 
     private void checkBTPermission() {
@@ -174,30 +180,6 @@ public class MainActivity extends AppCompatActivity {
         bondedAdapter.notifyDataSetChanged();
     }
 
-//    @Override
-//    protected void onActivityResult(int requestCode, int resultCode, Intent data) {
-//
-//        super.onActivityResult(requestCode, resultCode, data);
-//        if (requestCode == REQUEST_ENABLE_BT) {
-//            if (resultCode == RESULT_OK) {
-//                //Bluetooth is Enabled
-//                Toast.makeText(this, "Bluetooth is Enable", Toast.LENGTH_SHORT).show();
-//                bondedDevice();
-//                bluetoothOnOffBtn.setImageResource(R.drawable.ic_baseline_bluetooth_24);
-//            } else if (resultCode == RESULT_CANCELED) {
-//                // bluetooth enable is cancelled
-//                Toast.makeText(this, "Bluetooth Enable is Cancelled", Toast.LENGTH_LONG).show();
-//                bluetoothOnOffBtn.setImageResource(R.drawable.ic_baseline_bluetooth_disabled_24);
-//            }
-//        } else {
-//            Toast.makeText(this, "mmm", Toast.LENGTH_SHORT).show();
-//        }
-//    }
-
-    private void searchDevice() {
-
-
-    }
 
     ////////////////////////// all the broad cast /////////////////////////////
 
@@ -258,7 +240,6 @@ public class MainActivity extends AppCompatActivity {
                         Log.d(TAG, "Connected");
                         Toast.makeText(context, "connected", Toast.LENGTH_SHORT).show();
                         break;
-
                 }
             }
         }
@@ -297,18 +278,18 @@ public class MainActivity extends AppCompatActivity {
                 //case 1: bonded already
                 if (mDevice.getBondState() == BluetoothDevice.BOND_BONDED) {
                     Log.d(TAG, "BOND_BONDED");
-                    if (!bondedDeviceModelList.contains(mDevice)){
+                    if (!bondedDeviceModelList.contains(mDevice)) {
                         bondedDeviceModelList.add(new DeviceModel(mDevice));
                         //Toast.makeText(this, strings[index - 1] + "...." + device.getBluetoothClass(), Toast.LENGTH_SHORT).show();
                         bondedAdapter.notifyDataSetChanged();
                     }
                     Toast.makeText(context, "Bonded", Toast.LENGTH_SHORT).show();
-                }
+                }else
                 //case 2: creating a bond
                 if (mDevice.getBondState() == BluetoothDevice.BOND_BONDING) {
                     Log.d(TAG, "BOND_BONDING");
                     Toast.makeText(context, "bonding", Toast.LENGTH_SHORT).show();
-                }
+                }else
                 //case 3: breaking a bond
                 if (mDevice.getBondState() == BluetoothDevice.BOND_NONE) {
                     Log.d(TAG, "BOND_NONE");

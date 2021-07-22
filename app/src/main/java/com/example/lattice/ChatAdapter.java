@@ -1,5 +1,6 @@
 package com.example.lattice;
 
+import android.annotation.SuppressLint;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -47,13 +48,14 @@ public class ChatAdapter extends RecyclerView.Adapter<ChatAdapter.viewHolder> {
             mesg = itemView.findViewById(R.id.chat_text);
         }
 
+        @SuppressLint("SetTextI18n")
         public void setData(String message, int sendReceive) {
 
             if (sendReceive == ChatModel.SEND) {
-                itemView.setForegroundGravity(View.TEXT_ALIGNMENT_VIEW_END);
+                mesg.setTextAlignment(View.TEXT_ALIGNMENT_TEXT_END);
                 mesg.setText(message);
             } else if (sendReceive == ChatModel.RECEIVE) {
-                itemView.setForegroundGravity(View.TEXT_ALIGNMENT_VIEW_START);
+                mesg.setTextAlignment(View.TEXT_ALIGNMENT_TEXT_START);
                 mesg.setText(message);
             }
 

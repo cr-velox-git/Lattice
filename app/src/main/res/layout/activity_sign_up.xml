@@ -305,7 +305,7 @@
                         android:layout_weight="1"
                         android:ems="10"
                         android:hint="password"
-                        android:inputType="text" />
+                        android:inputType="textPassword" />
 
                     <EditText
                         android:id="@+id/ed_confirm_password"
@@ -314,7 +314,7 @@
                         android:layout_weight="1"
                         android:ems="10"
                         android:hint="confirm password"
-                        android:inputType="text" />
+                        android:inputType="textPassword" />
 
                     <TextView
                         android:id="@+id/er_password"

@@ -74,10 +74,12 @@ public class SearchAdapter extends RecyclerView.Adapter<SearchAdapter.Viewholder
                     if (Build.VERSION.SDK_INT > Build.VERSION_CODES.JELLY_BEAN_MR2) {
                         bluetoothDevice.createBond();
 
+                        if (!MainActivity.bondedDeviceModelList.contains(bluetoothDevice)) {
+                            MainActivity.bondedDeviceModelList.add(new DeviceModel(bluetoothDevice));
+                            //Toast.makeText(this, strings[index - 1] + "...." + device.getBluetoothClass(), Toast.LENGTH_SHORT).show();
+                            MainActivity.bondedAdapter.notifyDataSetChanged();
 
-                        MainActivity.bondedDeviceModelList.add(new DeviceModel(bluetoothDevice));
-                        //Toast.makeText(this, strings[index - 1] + "...." + device.getBluetoothClass(), Toast.LENGTH_SHORT).show();
-                        MainActivity.bondedAdapter.notifyDataSetChanged();
+                        }
 
                     }
                 }

@@ -22,8 +22,8 @@
         android:exported="true"
         android:theme="@style/Theme.Lattice">
         <activity android:name=".DeviceChatActivity"/>
-        <activity android:name=".SignUpActivity" />
-        <activity android:name=".MainActivity">
+        <activity android:name=".MainActivity" />
+        <activity android:name=".SignUpActivity">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
 

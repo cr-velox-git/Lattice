@@ -5,12 +5,14 @@ public class ChatModel {
     public static final int SEND = 0;
     public static final int RECEIVE = 1;
 
+
     private String message;
     private int sendReceive;
 
     public ChatModel(String message, int sendReceive) {
         this.message = message;
         this.sendReceive = sendReceive;
+
     }
 
     public String getMessage() {
@@ -28,4 +30,6 @@ public class ChatModel {
     public void setSendReceive(int sendReceive) {
         this.sendReceive = sendReceive;
     }
+
+
 }

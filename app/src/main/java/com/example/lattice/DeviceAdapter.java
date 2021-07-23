@@ -62,6 +62,7 @@ public class DeviceAdapter extends RecyclerView.Adapter<DeviceAdapter.Viewholder
             itemView.setOnClickListener(new View.OnClickListener() {
                 @Override
                 public void onClick(View v) {
+                    // intent with a bluetooth device
                     Intent messageIntent = new Intent(itemView.getContext(), DeviceChatActivity.class);
                     messageIntent.putExtra("BLUETOOTH_DEVICE", bluetoothDevice);
                     itemView.getContext().startActivity(messageIntent);

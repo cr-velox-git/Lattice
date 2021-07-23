@@ -32,6 +32,8 @@ import java.util.UUID;
 
 public class DeviceChatActivity extends AppCompatActivity {
 
+    private String TAG = "DeviceChatActivity:- ";
+
     private TextView status, chatDevice;
     private EditText writeMsg;
     private Button send;
@@ -42,6 +44,7 @@ public class DeviceChatActivity extends AppCompatActivity {
     BluetoothAdapter bluetoothAdapter = BluetoothAdapter.getDefaultAdapter();
     BluetoothDevice bluetoothDevice;
 
+    //connection condition
     static final int STATE_LISTENING = 1;
     static final int STATE_CONNECTING = 2;
     static final int STATE_CONNECTED = 3;
@@ -60,6 +63,9 @@ public class DeviceChatActivity extends AppCompatActivity {
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_device_chat);
+
+        Log.d(TAG,"Device Chat activity lunched");
+
         status = findViewById(R.id.status);
         send = findViewById(R.id.send);
         writeMsg = findViewById(R.id.writeMssg);
@@ -80,10 +86,11 @@ public class DeviceChatActivity extends AppCompatActivity {
 
 
         if (!bluetoothAdapter.isEnabled()) {
-
+            Log.d(TAG,"checking bluetooth connection");
             if (bluetoothAdapter == null) {
                 //Device does not support Bluetooth
                 Toast.makeText(this, "Bluetooth does not support on this devices", Toast.LENGTH_SHORT).show();
+
             } else {
                 //code to enable bluetooth
                 Intent enableBluetoothIntent = new Intent(BluetoothAdapter.ACTION_REQUEST_ENABLE);
@@ -119,9 +126,11 @@ public class DeviceChatActivity extends AppCompatActivity {
         if (requestCode == REQUEST_ENABLE_BLUETOOTH) {
             if (resultCode == RESULT_OK) {
                 //Bluetooth is Enabled
+                Log.d(TAG,"Bluetooth enabled");
                 Toast.makeText(this, "Bluetooth is Enable", Toast.LENGTH_SHORT).show();
             } else if (resultCode == RESULT_CANCELED) {
                 // bluetooth enable is cancelled
+                Log.d(TAG,"Bluetooth enabling canceled");
                 Toast.makeText(this, "Bluetooth Enable is Cancelled", Toast.LENGTH_LONG).show();
             }
         }
@@ -135,20 +144,25 @@ public class DeviceChatActivity extends AppCompatActivity {
             switch (msg.what) {
                 case STATE_LISTENING:
                     status.setText("Listening");
+                    Log.d(TAG,"listenting for connection");
                     send.setEnabled(true);
                     break;
                 case STATE_CONNECTING:
+                    Log.d(TAG,"connecting to device");
                     status.setText("Connecting");
                     break;
                 case STATE_CONNECTED:
+                    Log.d(TAG,"connected to the device");
                     status.setText("Connected");
                     send.setEnabled(true);
                     break;
                 case STATE_CONNECTION_FAILED:
+                    Log.d(TAG,"connection failed with the device");
                     status.setText("Connection Failed");
                     send.setEnabled(false);
                     break;
                 case STATE_MESSAGE_RECEIVED:
+                    Log.d(TAG,"message received");
                     send.setEnabled(true);
                     byte[] readBuff = (byte[]) msg.obj;
                     String tempMsg = new String(readBuff, 0, msg.arg1);
@@ -177,17 +191,18 @@ public class DeviceChatActivity extends AppCompatActivity {
 
         public void run() {
             BluetoothSocket socket = null;
-
+            Log.d(TAG,"listinting for incoming message");
             while (socket == null) {
                 try {
                     Message message = Message.obtain();
                     message.what = STATE_CONNECTING;
                     handler.sendMessage(message);
-
+                    Log.d(TAG,"STATE CONNECTING");
                     socket = serverSocket.accept();
                 } catch (IOException e) {
                     e.printStackTrace();
                     Message message = Message.obtain();
+                    Log.d(TAG,"STATE CONNECTION FAILED");
                     message.what = STATE_CONNECTION_FAILED;
                     handler.sendMessage(message);
                 }
@@ -196,7 +211,7 @@ public class DeviceChatActivity extends AppCompatActivity {
                     Message message = Message.obtain();
                     message.what = STATE_CONNECTED;
                     handler.sendMessage(message);
-
+                    Log.d(TAG,"STATE CANNECTED");
                     sendReceive = new SendReceive(socket);
                     sendReceive.start();
                     break;

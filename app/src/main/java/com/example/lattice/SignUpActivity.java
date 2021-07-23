@@ -10,6 +10,7 @@ import android.os.Build;
 import android.os.Bundle;
 import android.text.Editable;
 import android.text.TextWatcher;
+import android.util.Log;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.Button;
@@ -46,6 +47,7 @@ public class SignUpActivity extends AppCompatActivity {
     private Dialog loadingDialog;
     List<UserData> userDataList = new ArrayList<>();
     RoomDB database;
+    private String TAG = "SignUpActivity:-";
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -277,6 +279,8 @@ public class SignUpActivity extends AppCompatActivity {
 
                                 userDataList.addAll(database.userDao().getAll());
 
+                                Log.d(TAG,"Data uploaded to Json file");
+                                Toast.makeText(this, "Data uploaded", Toast.LENGTH_SHORT).show();
                                 loadingDialog.dismiss();
                                 Intent mainIntent = new Intent(SignUpActivity.this, MainActivity.class);
                                 startActivity(mainIntent);
